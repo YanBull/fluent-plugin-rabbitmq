@@ -53,6 +53,8 @@ module Fluent::Plugin
     config_param :exchange_type, :string
     config_param :exchange_durable, :bool, default: false
 
+    config_param :exchange_existing, :bool, default: false
+
     config_param :persistent, :bool, default: false
     config_param :routing_key, :string, default: nil    
     config_param :id_key, :string, default: nil
@@ -123,11 +125,21 @@ module Fluent::Plugin
       super
       @bunny.start
       @channel = @bunny.create_channel
+      
       exchange_options = {
         durable: @exchange_durable,
         auto_delete: @exchange_auto_delete
       }
-      @bunny_exchange = Bunny::Exchange.new(@channel, @exchange_type, @exchange, exchange_options)
+
+      if @exchange_existing
+        exchange_options = {
+          durable: @exchange_durable,
+        }
+        @bunny_exchange = @channel.topic(@exchange, exchange_options)
+      else
+        @bunny_exchange = Bunny::Exchange.new(@channel, @exchange_type, @exchange, exchange_options)
+      end
+
     end
 
     def shutdown
