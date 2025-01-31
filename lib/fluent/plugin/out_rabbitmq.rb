@@ -125,14 +125,18 @@ module Fluent::Plugin
       super
       @bunny.start
       @channel = @bunny.create_channel
+    
+      exchange_options = {
+        durable: @exchange_durable,
+        auto_delete: @exchange_auto_delete
+      }
 
       if @exchange_existing
-        @bunny_exchange = @channel.exchange(@exchange)
-      else
-        exchange_options = {
-          durable: @exchange_durable,
-          auto_delete: @exchange_auto_delete
+        exchange_options_no_declare = {
+          no_declare: true
         }
+        @bunny_exchange = Bunny::Exchange.initialize(@channel, @exchange_type, @exchange, exchange_options_no_declare)
+      else
         @bunny_exchange = Bunny::Exchange.new(@channel, @exchange_type, @exchange, exchange_options)
       end
 
